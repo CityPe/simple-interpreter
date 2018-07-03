@@ -6,9 +6,9 @@ class Token(object):
         self.value = value
 
     def __str__(self):
-        return 'Token({type},{value})'.format(
-            type = self.type
-            value = repr(self.value)
+        return 'Token({type}, {value})'.format(
+            type=self.type,
+            value=repr(self.value)
         )
     __repr__ = __str__
 
@@ -60,17 +60,17 @@ class Interpreter(object):
         result = left.value + right.value
         return result
     
-    def main():
-        while True:
-            try:
-                text = input("cal>")
-            except EOFError:
-                break
-            if not text:
-                continue
-            interpreter = Interpreter(text)
-            result = interpreter.expr()
-            print(result)
+def main():
+    while True:
+        try:
+            text = input("cal>")
+        except EOFError:
+            break
+        if not text:
+            continue
+        interpreter = Interpreter(text)
+        result = interpreter.expr()
+        print(result)
 
 if __name__ == "__main__":
     main()
