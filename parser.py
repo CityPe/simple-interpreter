@@ -1,5 +1,7 @@
-# INTEGER, PLUS, MINUS, EOF = 'INTEGER','PLUS','MINUS','EOF'
-INTEGER, MUL, DIV, EOF = 'INTEGER', 'MUL', 'DIV', 'EOF'
+INTEGER, PLUS, MINUS, MUL, DIV, EOF = (
+    'INTEGER', 'PLUS', 'MINUS', 'MUL', 'DIV', 'EOF'
+)
+
 
 class Token(object):
     def __init__(self,type,value):
@@ -38,6 +40,7 @@ class Lexer(object):
         result = ''
         while self.current_char is not None and self.current_char.isdigit():
             result += self.current_char
+            self.advance()
         return int(result)
 
     def get_next_token(self):
@@ -49,11 +52,21 @@ class Lexer(object):
 
             if self.current_char.isdigit():
                 return Token(INTEGER, self.integer())
+            
+            if self.current_char == '+':
+                self.advance()
+                return Token(PLUS,'+')
+            
+            if self.current_char == '-':
+                self.advance()
+                return Token(MINUS,'-')
 
             if self.current_char == '*':
+                self.advance()
                 return Token(MUL,'*')
             
             if self.current_char == '/':
+                self.advance()
                 return Token(DIV, '/')
             self.error()
         return Token(EOF, None)
@@ -71,19 +84,9 @@ class Interpreter(object):
             self.current_token = self.lexer.get_next_token()
         else:
             self.error()
-    
-    def factor(self):
-        """Return an INTEGER token value.
-
-        factor : INTEGER
-        """
-        token = self.current_token
-        self.eat(INTEGER)
-        return token.value
-
-    def expr(self):
+        
+    def term(self):
         result = self.factor()
-        print(11)
         while self.current_token.type in (MUL,DIV):
             token = self.current_token
             if token.type == MUL:
@@ -92,8 +95,26 @@ class Interpreter(object):
             elif token.type == DIV:
                 self.eat(DIV)
                 result = result / self.factor()
-        print(result)
         return result
+    
+    def factor(self):
+
+        token = self.current_token
+        self.eat(INTEGER)
+        return token.value
+
+    def expr(self):
+        result = self.term()
+        while self.current_token.type in (PLUS, MINUS):
+            token = self.current_token
+            if token.type == PLUS:
+                self.eat(PLUS)
+                result = result + self.term()
+            elif token.type == MINUS:
+                self.eat(MINUS)
+                result = result - self.term()
+        return result
+            
 
 def main():
     while True:
