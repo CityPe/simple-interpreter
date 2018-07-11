@@ -79,8 +79,22 @@ class Lexer(object):
 
             self.error()
         return Token(EOF, None)
+
+class AST(object):
+    pass
+
+class BinOp(AST):
+    def __init__(self, left, op, right):
+        self.left = left
+        self.token = self.op = op
+        self.right = right
+
+class Num(AST):
+    def __init__(self, token):
+        self.token = token
+        self.value = token.value
     
-class Interpreter(object):
+class Parser(object):
     def __init__(self, lexer):
         self.lexer = lexer
         self.current_token = self.lexer.get_next_token()
@@ -94,41 +108,50 @@ class Interpreter(object):
         else:
             self.error()
         
-    def term(self):
-        result = self.factor()
-        while self.current_token.type in (MUL,DIV):
-            token = self.current_token
-            if token.type == MUL:
-                self.eat(MUL)
-                result = result * self.factor()
-            elif token.type == DIV:
-                self.eat(DIV)
-                result = result / self.factor()
-        return result
-    
+        
     def factor(self):
         token = self.current_token
         if token.type == INTEGER:
             self.eat(INTEGER)
+            return Num(token)
+        
         elif token.type == LPAREN:
             self.eat(LPAREN)
-            result = self.expr()
+            node = self.expr()
             self.eat(RPAREN)
-            return result
-        return token.value
+            return node 
+        
+        
+    def term(self):
+        
+        """
+         1 * 2 * 3 
+
+              *
+        *         3
+    1       2
+        """
+        node = self.factor()
+        while self.current_token.type in (DIV, MUL):
+            token = self.current_token
+            self.eat(token.type)
+
+            node = BinOp(left = node, op=token, right=self.factor())
+        
+        return node
+    
 
     def expr(self):
-        result = self.term()
+        node = self.term()
+
         while self.current_token.type in (PLUS, MINUS):
-            token = self.current_token
-            if token.type == PLUS:
-                self.eat(PLUS)
-                result = result + self.term()
-            elif token.type == MINUS:
-                self.eat(MINUS)
-                result = result - self.term()
-        return result
-            
+            self.eat(self.current_token.type)
+
+            node = Binop(left = node, op = Token, right = self.term())
+        return node
+    
+    def parse(self):
+        return self.expr()
 
 def main():
     while True:
